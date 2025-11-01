@@ -1,17 +1,35 @@
-# Using Paketo Buildpacks for Cloud Native builds
-FROM paketobuildpacks/builder-jammy-base:latest AS builder
-WORKDIR /workspace
-COPY . .
+# Multi-stage build for .NET Core application
+# Stage 1: Build the application
+FROM mcr.microsoft.com/dotnet/sdk:9.0-alpine AS builder
 
-# Runtime stage
-FROM mcr.microsoft.com/dotnet/aspnet:9.0
 WORKDIR /app
 
-COPY --from=builder /workspace/bin/Release/net8.0/publish/ .
+# Copy project file and restore dependencies (cached layer)
+COPY *.csproj .
+RUN dotnet restore
 
+# Copy everything else and build
+COPY . .
+RUN dotnet publish -c Release -o /app/publish
+
+# Stage 2: Runtime
+FROM mcr.microsoft.com/dotnet/aspnet:9.0-alpine
+
+WORKDIR /app
+
+# Copy published application from builder stage
+COPY --from=builder /app/publish .
+
+# Expose port
 EXPOSE 8081
 
+# Set default environment variables
 ENV ASPNETCORE_URLS=http://+:8081
-ENV DOTNET_RUNNING_IN_CONTAINER=true
+ENV PORT=8081
 
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT}/health || exit 1
+
+# Run the application
 ENTRYPOINT ["dotnet", "dotnet-demo.dll"]

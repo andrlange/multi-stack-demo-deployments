@@ -18,6 +18,8 @@ The goal of this demo is to:
 ### Simple-Demo (Stateless Applications)
 Basic stateless applications showcasing fundamental cloud-native patterns.
 
+![Simple Demo Screenshot](assets/simple-demo.png)
+
 #### 1. Spring Boot Demo (`simple-demo/spring-boot-demo`)
 - **Framework**: Spring Boot 3.5.7
 - **Language**: Java 25
@@ -35,6 +37,8 @@ Basic stateless applications showcasing fundamental cloud-native patterns.
 
 ### DB-Demo (Database-Backed Applications)
 Applications with PostgreSQL database integration demonstrating cloud-native data patterns.
+
+![DB Demo Screenshot](assets/db-demo.png)
 
 #### 1. Spring Boot DB Demo (`db-demo/spring-boot-demo`)
 - **Framework**: Spring Boot 3.5.7 + Spring Data JPA
@@ -67,6 +71,8 @@ Applications with PostgreSQL database integration demonstrating cloud-native dat
 - **Endpoint**: `GET /api/infos`
 - **Returns**: JSON with tech stack information and instance details
 
+![API Infos Response](assets/api-infos.png)
+
 ### DB-Demo Features
 
 #### Web Interface
@@ -78,6 +84,8 @@ Applications with PostgreSQL database integration demonstrating cloud-native dat
 #### REST API
 - **Endpoint**: `GET /api/infos` - Tech stack information
 - **Endpoint**: `GET /api/pets` - List all pets from PostgreSQL database
+
+![API Pets Response](assets/api-pets.png)
 
 #### Database Integration
 - **PostgreSQL 17**: Relational database with automatic schema creation
@@ -180,6 +188,15 @@ Configuration files:
 - ✅ **Health Monitoring**: Each app exposes health information
 - ✅ **Platform Portability**: Runs on local, Docker, Cloud Foundry
 
+#### Health Check Endpoints
+All applications provide health check endpoints for monitoring and orchestration:
+
+![Spring Boot Actuator Health](assets/actuator-health.png)
+
+- **Spring Boot**: `/actuator/health` - Actuator health endpoint
+- **.NET Core**: `/health` - ASP.NET Core health check
+- **Node.js**: `/health` - Custom health endpoint
+
 ### DB-Demo Patterns (Additional)
 - ✅ **External Service Dependency**: Database as a separate, managed service
 - ✅ **Service Binding**: Cloud Foundry VCAP_SERVICES for database credentials
@@ -217,6 +234,7 @@ demo/
 ├── CLAUDE.md (planning document)
 ├── LICENSE (MIT License)
 ├── .gitignore
+├── assets/ (screenshots)
 ├── simple-demo/
 │   ├── spring-boot-demo/
 │   ├── dotnet-demo/

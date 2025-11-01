@@ -59,15 +59,16 @@ app.deployment.color=blue  # or green, or any color
 
 ### 1. Local Development
 Each application can be run locally on macOS:
-- Spring Boot: `./mvnw spring-boot:run`
+- Spring Boot: `mvn spring-boot:run` (requires Maven installed)
 - .NET Core: `dotnet run`
 - Node.js: `npm start`
 
-### 2. Docker with Cloud Native Buildpacks
-Using Paketo buildpacks for consistent, secure container images:
-- **Dockerfile**: For each stack (using buildpack builders)
-- **build.sh**: Script to build Docker images using buildpacks
+### 2. Docker with Multi-Stage Builds
+Using standard multi-stage Docker builds for consistent, secure container images:
+- **Dockerfile**: Multi-stage builds with builder and runtime stages
+- **build.sh**: Script to build applications locally
 - **docker-compose.yaml**: For running the application locally in containers
+- Each Dockerfile includes health checks for container orchestration
 
 ### 3. Cloud Foundry
 - **manifest.yml**: CF deployment descriptor
@@ -79,52 +80,70 @@ Using Paketo buildpacks for consistent, secure container images:
 demo/
 ├── CLAUDE.md (this file)
 ├── README.md
+├── LICENSE (MIT License for educational use)
+├── .gitignore (comprehensive ignore file for all stacks)
+├── assets/ (screenshots for documentation)
+│   ├── simple-demo.png
+│   ├── db-demo.png
+│   ├── api-infos.png
+│   ├── api-pets.png
+│   └── actuator-health.png
 ├── simple-demo/
 │   ├── spring-boot-demo/
 │   │   ├── src/
 │   │   ├── pom.xml
-│   │   ├── Dockerfile
-│   │   ├── build.sh
+│   │   ├── Dockerfile (multi-stage: Maven builder + JRE runtime)
 │   │   ├── docker-compose.yaml
-│   │   ├── manifest.yml
+│   │   ├── manifest.yml, manifest-blue.yml, manifest-green.yml
+│   │   ├── build.sh, deploy-default.sh, deploy-blue.sh, deploy-green.sh
+│   │   ├── toggle.sh (switch between blue/green versions)
 │   │   └── README.md
 │   ├── dotnet-demo/
 │   │   ├── Program.cs
 │   │   ├── *.csproj
-│   │   ├── Dockerfile
-│   │   ├── build.sh
+│   │   ├── Dockerfile (multi-stage: .NET SDK builder + ASP.NET runtime)
 │   │   ├── docker-compose.yaml
-│   │   ├── manifest.yml
+│   │   ├── manifest.yml, manifest-blue.yml, manifest-green.yml
+│   │   ├── build.sh, deploy-default.sh, deploy-blue.sh, deploy-green.sh
+│   │   ├── toggle.sh (switch between blue/green versions)
 │   │   └── README.md
 │   └── nodejs-demo/
 │       ├── src/
 │       ├── package.json
-│       ├── Dockerfile
-│       ├── build.sh
+│       ├── Dockerfile (Node.js 22 Alpine)
 │       ├── docker-compose.yaml
-│       ├── manifest.yml
+│       ├── manifest.yml, manifest-blue.yml, manifest-green.yml
+│       ├── build.sh, deploy-default.sh, deploy-blue.sh, deploy-green.sh
+│       ├── toggle.sh (switch between blue/green versions)
 │       └── README.md
 └── db-demo/
     ├── spring-boot-demo/
-    │   ├── src/
+    │   ├── src/ (Spring Data JPA repositories, entities, services)
     │   ├── pom.xml
-    │   ├── docker-compose.yaml (includes PostgreSQL 17 + pgAdmin)
-    │   ├── manifest.yml
-    │   ├── create-db-service.sh
+    │   ├── Dockerfile (multi-stage: Maven builder + JRE runtime)
+    │   ├── docker-compose.yaml (PostgreSQL 17 + pgAdmin + app)
+    │   ├── manifest.yml, manifest-blue.yml, manifest-green.yml
+    │   ├── build.sh, deploy-default.sh, deploy-blue.sh, deploy-green.sh
+    │   ├── toggle.sh, create-db-service.sh
     │   └── README.md
     ├── dotnet-demo/
-    │   ├── Program.cs
+    │   ├── Controllers/, Models/, Data/ (EF Core DbContext)
+    │   ├── Program.cs (VCAP_SERVICES parsing)
     │   ├── *.csproj
-    │   ├── docker-compose.yaml (includes PostgreSQL 17 + pgAdmin)
-    │   ├── manifest.yml
-    │   ├── create-db-service.sh
+    │   ├── Dockerfile (multi-stage: .NET SDK builder + ASP.NET runtime)
+    │   ├── docker-compose.yaml (PostgreSQL 17 + pgAdmin + app)
+    │   ├── manifest.yml, manifest-blue.yml, manifest-green.yml
+    │   ├── build.sh, deploy-default.sh, deploy-blue.sh, deploy-green.sh
+    │   ├── toggle.sh, create-db-service.sh
     │   └── README.md
     └── nodejs-demo/
-        ├── src/
+        ├── public/, server.js (pg client, database initialization)
         ├── package.json
-        ├── docker-compose.yaml (includes PostgreSQL 17 + pgAdmin)
-        ├── manifest.yml
-        ├── create-db-service.sh
+        ├── Dockerfile (Node.js 22 Alpine)
+        ├── docker-compose.yaml (PostgreSQL 17 + pgAdmin + app)
+        ├── manifest.yml, manifest-blue.yml, manifest-green.yml
+        ├── build.sh, deploy-default.sh, deploy-blue.sh, deploy-green.sh
+        ├── toggle.sh, create-db-service.sh
         └── README.md
 ```
 
@@ -133,9 +152,10 @@ demo/
 1. **Stateless Applications**: Each instance is independently runnable
 2. **Twelve-Factor App**: Configuration externalized, environment-based settings
 3. **Health Checks**: Endpoints for monitoring application health
-4. **Containerization**: Cloud Native Buildpacks for reproducible builds
+4. **Containerization**: Multi-stage Docker builds for reproducible, secure images
 5. **Blue/Green Deployments**: Version and color coding for zero-downtime deployments
 6. **Platform Portability**: Same app runs on local, Docker, Cloud Foundry
+7. **Build Automation**: Automated build and deployment scripts for each stack
 
 ## Key Decisions
 
@@ -149,10 +169,35 @@ demo/
 - Additional colors can be used (red, yellow, etc.) for more complex scenarios
 - Colors applied via CSS classes based on configuration
 
-### Buildpack Strategy
-- Paketo buildpacks chosen for their security, efficiency, and ecosystem support
-- Automatic detection of application type
-- No need for explicit base images - buildpacks handle everything
+### Docker Build Strategy
+- **Multi-stage builds**: Separate builder and runtime stages for smaller, more secure images
+- **Official base images**: Using official Maven, .NET SDK, and Node.js images for builders
+- **Minimal runtime images**: Alpine-based JRE, ASP.NET runtime, and Node.js for production
+- **Layer caching**: Dependencies cached separately from source code for faster builds
+- **Health checks**: Built into Dockerfiles for container orchestration
+- **Cloud Foundry**: Platform still uses buildpacks automatically during `cf push`
+
+**Why Multi-Stage Builds Instead of Paketo Buildpacks? For this Demo-Setup only!**
+- Simpler setup without CNB lifecycle complexity
+- More transparent build process
+- Easier to customize and debug
+- Works consistently across all environments
+- Smaller final images with Alpine Linux
+- Direct control over build and runtime stages
+
+### Build Tool Strategy
+- **Maven**: Direct `mvn` command instead of Maven Wrapper (`./mvnw`)
+  - Assumes Maven is installed locally (standard for development environments)
+  - Simpler scripts without wrapper complexity
+  - Docker builds use official Maven images with built-in Maven
+- **.NET**: Standard `dotnet` CLI (no wrapper needed)
+- **Node.js**: Standard `npm` CLI (no wrapper needed)
+
+### Toggle Script Behavior
+The `toggle.sh` script switches between blue (1.0.0) and green (2.0.0) versions by updating:
+1. **Configuration files**: `application.properties`, `appsettings.json`, or `.env`
+2. **docker-compose.yaml**: Environment variables for Docker builds
+This ensures version consistency between local development and Docker Compose deployments.
 
 ### API Response Format
 ```json
@@ -365,7 +410,11 @@ Each framework has its own way to parse VCAP_SERVICES:
 ### .NET Core
 - **ORM**: Entity Framework Core
 - **Driver**: Npgsql (PostgreSQL .NET driver)
-- **Connection**: DbContext configuration from environment
+- **Connection**: DbContext configuration with priority order:
+  1. VCAP_SERVICES (Cloud Foundry)
+  2. DATABASE_URL environment variable (Docker Compose)
+  3. appsettings.json ConnectionStrings (local development)
+  4. Hardcoded fallback
 
 ### Node.js
 - **Client**: `pg` (node-postgres)

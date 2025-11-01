@@ -16,7 +16,7 @@ The project includes two demo applications:
 - **Port**: 8080
 
 ### 2. .NET Core
-- **Framework**: .NET 9.0 (latest LTS)
+- **Framework**: .NET 8.0 (LTS)
 - **Language**: C#
 - **Build Tool**: dotnet CLI
 - **Port**: 8081

@@ -26,7 +26,7 @@ Basic stateless applications showcasing fundamental cloud-native patterns.
 - **Port**: 8080 (configurable via PORT env var)
 
 #### 2. .NET Core Demo (`simple-demo/dotnet-demo`)
-- **Framework**: .NET 9.0
+- **Framework**: .NET 8.0
 - **Language**: C#
 - **Port**: 8081 (configurable via PORT env var)
 
@@ -47,7 +47,7 @@ Applications with PostgreSQL database integration demonstrating cloud-native dat
 - **Port**: 8080 (configurable via PORT env var)
 
 #### 2. .NET Core DB Demo (`db-demo/dotnet-demo`)
-- **Framework**: .NET 9.0 + Entity Framework Core
+- **Framework**: .NET 8.0 + Entity Framework Core
 - **Language**: C#
 - **Database**: PostgreSQL 17
 - **Port**: 8081 (configurable via PORT env var)

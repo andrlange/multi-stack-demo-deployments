@@ -1,6 +1,6 @@
 # .NET Core Demo Application
 
-A cloud-native demo application built with ASP.NET Core 9.0 and C#.
+A cloud-native demo application built with ASP.NET Core 8.0 and C#.
 
 ## Features
 - Web interface showing tech stack information
@@ -12,7 +12,7 @@ A cloud-native demo application built with ASP.NET Core 9.0 and C#.
 ## Prerequisites
 
 ### For Local Development
-- .NET 9.0 SDK or later
+- .NET 8.0 SDK or later
 
 ### For Docker Build
 - Docker
@@ -239,9 +239,9 @@ Each time you run the script, it toggles between:
   "deploymentColor": "blue",
   "techStack": {
     "framework": "ASP.NET Core",
-    "version": "9.0",
+    "version": "8.0",
     "language": "C#",
-    "languageVersion": "9.0.0",
+    "languageVersion": "8.0.x",
     "runtime": ".NET Runtime"
   }
 }
@@ -282,7 +282,7 @@ dotnet-demo/
 ```
 
 ## Technology Stack
-- **Framework**: ASP.NET Core 9.0
+- **Framework**: ASP.NET Core 8.0
 - **Language**: C#
 - **Build Tool**: dotnet CLI
-- **Containerization**: Paketo Buildpacks
+- **Containerization**: Multi-stage Docker builds

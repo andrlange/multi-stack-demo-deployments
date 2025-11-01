@@ -1,6 +1,6 @@
-# .NET Core PostgreSQL Demo Application
+# .NET Core PostgreSQL/MySQL Demo Application
 
-A cloud-native demo application built with .NET 9.0 and PostgreSQL 17, demonstrating database integration, service binding, and blue/green deployment patterns.
+A cloud-native demo application built with .NET 8.0 and PostgreSQL/MySQL, demonstrating database integration, service binding, and blue/green deployment patterns.
 
 ## Features
 
@@ -14,20 +14,20 @@ A cloud-native demo application built with .NET 9.0 and PostgreSQL 17, demonstra
 
 ## Tech Stack
 
-- **.NET Core**: 9.0
-- **Database**: PostgreSQL 17 with Entity Framework Core
-- **ORM**: Entity Framework Core 9.0
-- **PostgreSQL Driver**: Npgsql
+- **.NET Core**: 8.0
+- **Database**: PostgreSQL 17 or MySQL 8 with auto-detection
+- **ORM**: Entity Framework Core 8.0
+- **Database Drivers**: Npgsql (PostgreSQL) + Pomelo.EntityFrameworkCore.MySql (MySQL)
 - **Frontend**: HTML + Vanilla JavaScript
 - **Build Tool**: dotnet CLI
-- **Container**: Docker + Paketo Buildpacks
+- **Container**: Docker with multi-stage builds
 
 ## Prerequisites
 
-- .NET 9.0 SDK
+- .NET 8.0 SDK or later
 - Docker and Docker Compose (for local development)
 - Cloud Foundry CLI (for CF deployments)
-- PostgreSQL 17 (or use Docker Compose)
+- PostgreSQL 17 or MySQL 8 (or use Docker Compose)
 
 ## Quick Start
 
@@ -115,12 +115,12 @@ Returns technology stack information and application metadata.
   "version": "1.0.0",
   "deploymentColor": "blue",
   "techStack": {
-    "framework": ".NET Core",
-    "version": "9.0",
+    "framework": "ASP.NET Core",
+    "version": "8.0",
     "language": "C#",
-    "languageVersion": "13.0",
-    "runtime": ".NET Runtime 9.0",
-    "database": "PostgreSQL 17"
+    "languageVersion": "8.0.x",
+    "runtime": ".NET Runtime",
+    "database": "PostgreSQL"
   }
 }
 ```

@@ -30,7 +30,7 @@ public class InfoController : ControllerBase
         var techStack = new TechStack
         {
             Framework = "ASP.NET Core",
-            Version = "9.0",
+            Version = "8.0",
             Language = "C#",
             LanguageVersion = dotnetVersion,
             Runtime = ".NET Runtime",

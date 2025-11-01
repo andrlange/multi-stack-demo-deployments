@@ -4,7 +4,7 @@ applications:
     memory: 1G
     instances: 2
     buildpacks:
-      - java_buildpack
+      - java_buildpack_offline
     path: target/spring-boot-demo-1.0.0.jar
     env:
       JBP_CONFIG_OPEN_JDK_JRE: '{ jre: { version: 25.+ } }'

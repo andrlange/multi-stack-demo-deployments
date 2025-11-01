@@ -74,31 +74,60 @@ static (string connectionString, string dbType) GetDatabaseConnectionString(ICon
         {
             var services = System.Text.Json.JsonDocument.Parse(vcapServices);
 
-            // Check for MySQL first
-            if (services.RootElement.TryGetProperty("mysql", out var mysqlServices))
+            // Check for MySQL first (both "mysql" and "p.mysql" service types)
+            if (services.RootElement.TryGetProperty("mysql", out var mysqlServices) ||
+                services.RootElement.TryGetProperty("p.mysql", out mysqlServices))
             {
                 var mysql = mysqlServices[0];
                 var credentials = mysql.GetProperty("credentials");
 
-                var host = credentials.GetProperty("host").GetString();
-                var port = credentials.GetProperty("port").GetInt32();
-                var database = credentials.GetProperty("database").GetString();
-                var username = credentials.GetProperty("username").GetString();
+                // Check if credentials contain a URI (common with CredHub)
+                if (credentials.TryGetProperty("uri", out var uriElement))
+                {
+                    var uri = uriElement.GetString();
+                    if (!string.IsNullOrEmpty(uri))
+                    {
+                        var parsedUri = ParseMySqlUri(uri);
+                        Console.WriteLine("Using MySQL database from VCAP_SERVICES (URI)");
+                        return (parsedUri, "mysql");
+                    }
+                }
+
+                // Otherwise parse individual credential fields
+                var host = credentials.GetProperty("hostname").GetString() ?? credentials.GetProperty("host").GetString();
+                var port = credentials.TryGetProperty("port", out var portElement) ? portElement.GetInt32() : 3306;
+                var database = credentials.GetProperty("name").GetString() ?? credentials.GetProperty("database").GetString();
+                var username = credentials.GetProperty("username").GetString() ?? credentials.GetProperty("user").GetString();
                 var password = credentials.GetProperty("password").GetString();
 
                 Console.WriteLine("Using MySQL database from VCAP_SERVICES");
                 return ($"Server={host};Port={port};Database={database};User={username};Password={password};SslMode=Required;", "mysql");
             }
-            // Check for PostgreSQL
-            else if (services.RootElement.TryGetProperty("postgres", out var postgresServices))
+            // Check for PostgreSQL (both "postgres" and "p.postgresql" service types)
+            else if (services.RootElement.TryGetProperty("postgres", out var postgresServices) ||
+                     services.RootElement.TryGetProperty("p.postgresql", out postgresServices) ||
+                     services.RootElement.TryGetProperty("postgresql", out postgresServices))
             {
                 var postgres = postgresServices[0];
                 var credentials = postgres.GetProperty("credentials");
 
-                var host = credentials.GetProperty("host").GetString();
-                var port = credentials.GetProperty("port").GetInt32();
-                var database = credentials.GetProperty("database").GetString();
-                var username = credentials.GetProperty("username").GetString();
+                // Check if credentials contain a URI (common with CredHub)
+                if (credentials.TryGetProperty("uri", out var uriElement))
+                {
+                    var uri = uriElement.GetString();
+                    if (!string.IsNullOrEmpty(uri))
+                    {
+                        var parsedUri = ParsePostgreSqlUri(uri);
+                        Console.WriteLine("Using PostgreSQL database from VCAP_SERVICES (URI)");
+                        return (parsedUri, "postgres");
+                    }
+                }
+
+                // Otherwise parse individual credential fields
+                var host = credentials.GetProperty("hostname").GetString() ?? credentials.GetProperty("host").GetString();
+                var port = credentials.TryGetProperty("port", out var portElement) ? portElement.GetInt32() : 5432;
+                var database = credentials.GetProperty("name").GetString() ?? credentials.GetProperty("database").GetString();
+                var username = credentials.GetProperty("username").GetString() ?? credentials.GetProperty("user").GetString();
                 var password = credentials.GetProperty("password").GetString();
 
                 Console.WriteLine("Using PostgreSQL database from VCAP_SERVICES");
@@ -122,4 +151,52 @@ static (string connectionString, string dbType) GetDatabaseConnectionString(ICon
 
     Console.WriteLine($"Using {dbType} database from configuration/environment");
     return (connString, dbType);
+}
+
+static string ParseMySqlUri(string uri)
+{
+    // Parse URI format: mysql2://username:password@host:port/database?params
+    // or mysql://username:password@host:port/database?params
+    try
+    {
+        var cleanUri = uri.Replace("mysql2://", "mysql://");
+        var mysqlUri = new Uri(cleanUri);
+
+        var host = mysqlUri.Host;
+        var port = mysqlUri.Port > 0 ? mysqlUri.Port : 3306;
+        var database = mysqlUri.AbsolutePath.TrimStart('/').Split('?')[0];
+        var userInfo = mysqlUri.UserInfo.Split(':');
+        var username = Uri.UnescapeDataString(userInfo[0]);
+        var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
+
+        return $"Server={host};Port={port};Database={database};User={username};Password={password};SslMode=Required;";
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error parsing MySQL URI: {ex.Message}");
+        throw;
+    }
+}
+
+static string ParsePostgreSqlUri(string uri)
+{
+    // Parse URI format: postgres://username:password@host:port/database?params
+    try
+    {
+        var postgresUri = new Uri(uri);
+
+        var host = postgresUri.Host;
+        var port = postgresUri.Port > 0 ? postgresUri.Port : 5432;
+        var database = postgresUri.AbsolutePath.TrimStart('/').Split('?')[0];
+        var userInfo = postgresUri.UserInfo.Split(':');
+        var username = Uri.UnescapeDataString(userInfo[0]);
+        var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
+
+        return $"Host={host};Port={port};Database={database};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true";
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error parsing PostgreSQL URI: {ex.Message}");
+        throw;
+    }
 }

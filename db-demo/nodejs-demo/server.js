@@ -23,17 +23,25 @@ function getDatabaseConfig() {
         try {
             const vcapServices = JSON.parse(process.env.VCAP_SERVICES);
 
-            // Check for MySQL service
-            if (vcapServices.mysql && vcapServices.mysql.length > 0) {
-                const mysqlService = vcapServices.mysql[0];
+            // Check for MySQL service (both "mysql" and "p.mysql" service types)
+            const mysqlServices = vcapServices.mysql || vcapServices['p.mysql'];
+            if (mysqlServices && mysqlServices.length > 0) {
+                const mysqlService = mysqlServices[0];
                 const credentials = mysqlService.credentials;
+
+                // Check if credentials contain a URI (common with CredHub)
+                if (credentials.uri) {
+                    console.log('✓ Detected MySQL service from VCAP_SERVICES (URI)');
+                    dbType = 'mysql';
+                    return parseMySqlUri(credentials.uri);
+                }
 
                 console.log('✓ Detected MySQL service from VCAP_SERVICES');
                 dbType = 'mysql';
                 return {
                     type: 'mysql',
                     host: credentials.host || credentials.hostname,
-                    port: credentials.port,
+                    port: credentials.port || 3306,
                     database: credentials.name || credentials.database,
                     user: credentials.username || credentials.user,
                     password: credentials.password,
@@ -41,17 +49,25 @@ function getDatabaseConfig() {
                 };
             }
 
-            // Check for PostgreSQL service
-            if (vcapServices.postgres && vcapServices.postgres.length > 0) {
-                const postgresService = vcapServices.postgres[0];
+            // Check for PostgreSQL service (both "postgres", "p.postgresql", and "postgresql" service types)
+            const postgresServices = vcapServices.postgres || vcapServices['p.postgresql'] || vcapServices.postgresql;
+            if (postgresServices && postgresServices.length > 0) {
+                const postgresService = postgresServices[0];
                 const credentials = postgresService.credentials;
+
+                // Check if credentials contain a URI (common with CredHub)
+                if (credentials.uri) {
+                    console.log('✓ Detected PostgreSQL service from VCAP_SERVICES (URI)');
+                    dbType = 'postgres';
+                    return parsePostgreSqlUri(credentials.uri);
+                }
 
                 console.log('✓ Detected PostgreSQL service from VCAP_SERVICES');
                 dbType = 'postgres';
                 return {
                     type: 'postgres',
                     host: credentials.host || credentials.hostname,
-                    port: credentials.port,
+                    port: credentials.port || 5432,
                     database: credentials.name || credentials.database,
                     user: credentials.username || credentials.user,
                     password: credentials.password,
@@ -96,6 +112,48 @@ function getDatabaseConfig() {
         user: process.env.DB_USER || 'demouser',
         password: process.env.DB_PASSWORD || 'demopass'
     };
+}
+
+// Parse MySQL URI format: mysql2://username:password@host:port/database?params
+function parseMySqlUri(uri) {
+    try {
+        // Handle both mysql:// and mysql2:// protocols
+        const cleanUri = uri.replace('mysql2://', 'mysql://');
+        const url = new URL(cleanUri);
+
+        return {
+            type: 'mysql',
+            host: url.hostname,
+            port: parseInt(url.port) || 3306,
+            database: url.pathname.substring(1).split('?')[0], // Remove leading '/' and query params
+            user: decodeURIComponent(url.username),
+            password: decodeURIComponent(url.password),
+            ssl: url.searchParams.get('ssl') ? { rejectUnauthorized: false } : undefined
+        };
+    } catch (error) {
+        console.error('Error parsing MySQL URI:', error);
+        throw error;
+    }
+}
+
+// Parse PostgreSQL URI format: postgres://username:password@host:port/database?params
+function parsePostgreSqlUri(uri) {
+    try {
+        const url = new URL(uri);
+
+        return {
+            type: 'postgres',
+            host: url.hostname,
+            port: parseInt(url.port) || 5432,
+            database: url.pathname.substring(1).split('?')[0], // Remove leading '/' and query params
+            user: decodeURIComponent(url.username),
+            password: decodeURIComponent(url.password),
+            ssl: url.searchParams.get('sslmode') !== 'disable' ? { rejectUnauthorized: false } : false
+        };
+    } catch (error) {
+        console.error('Error parsing PostgreSQL URI:', error);
+        throw error;
+    }
 }
 
 // Initialize database connection based on detected type

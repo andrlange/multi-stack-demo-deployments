@@ -41,11 +41,10 @@ echo "Step 5: Running database initializer task..."
 echo "This demonstrates Factor XII: Admin/management tasks as one-off processes"
 echo ""
 
-TASK_COMMAND="java -jar app.jar --spring.profiles.active=initializer"
-echo "Task command: $TASK_COMMAND"
+echo "Task command: java -jar app.jar --spring.profiles.active=initializer"
 echo ""
 
-TASK_OUTPUT=$(cf run-task "$APP_NAME" "$TASK_COMMAND" --name db-initializer)
+TASK_OUTPUT=$(cf run-task "$APP_NAME" "java -jar app.jar --spring.profiles.active=initializer" --name db-initializer)
 TASK_ID=$(echo "$TASK_OUTPUT" | grep "task id:" | awk '{print $3}')
 
 echo "✓ Database initializer task started with ID: $TASK_ID"

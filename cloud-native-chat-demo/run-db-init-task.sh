@@ -16,11 +16,10 @@ if ! cf app "$APP_NAME" > /dev/null 2>&1; then
 fi
 
 # Run the database initializer task
-TASK_COMMAND="java -jar app.jar --spring.profiles.active=initializer"
-echo "Running task: $TASK_COMMAND"
+echo "Running task: java -jar app.jar --spring.profiles.active=initializer"
 echo ""
 
-TASK_OUTPUT=$(cf run-task "$APP_NAME" "$TASK_COMMAND" --name db-initializer)
+TASK_OUTPUT=$(cf run-task "$APP_NAME" "java -jar app.jar --spring.profiles.active=initializer" --name db-initializer)
 TASK_ID=$(echo "$TASK_OUTPUT" | grep "task id:" | awk '{print $3}')
 
 echo "✓ Task started with ID: $TASK_ID"
